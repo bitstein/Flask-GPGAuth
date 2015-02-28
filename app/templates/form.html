@@ -12,13 +12,6 @@
             <span style="color: red;">[{{ error }}]</span>
           {% endfor %}<br>
       </p>
-      <p>
-          Password:<br>
-          {{ form.password(size=80) }}<br>
-          {% for error in form.password.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-          {% endfor %}<br>
-      </p>
       <p><input type="submit"></p>
   </form>
 {% endblock %}

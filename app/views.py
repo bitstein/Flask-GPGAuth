@@ -3,7 +3,6 @@ from flask.ext.login import login_user, logout_user, current_user, login_require
 from app import app, db, lm
 from forms import LoginForm, RegistrationForm
 from models import User
-from werkzeug.security import generate_password_hash, check_password_hash
 
 @lm.user_loader
 def load_user(id):
@@ -37,7 +36,6 @@ def register():
         user = User()
 
         form.populate_obj(user)
-        user.password = generate_password_hash(form.password.data)
 
         db.session.add(user)
         db.session.commit()

@@ -6,7 +6,7 @@ from config import GNUPGBINARY, GNUPGHOME
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
-    password = db.Column(db.String(64))
+    pgpkey = db.relationship("PGPKey", uselist=False, backref="user")
 
     def is_authenticated(self):
         return True
@@ -30,6 +30,7 @@ class PGPKey(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     fingerprint = db.Column(db.String(50), unique=True)
     is_trusted = db.Column(db.Boolean(), default=False)
+    user_id = db.Column(Integer, ForeignKey('user.id'))
 
     @validates('fingerprint')
     def validate_fingerprint(self, key, field):
