@@ -1,4 +1,4 @@
-from flask import render_template, flash, redirect, session, url_for, request, g
+from flask import render_template, flash, redirect, session, url_for, request, g, make_response
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from app import app, db, lm, gpg
 from forms import LoginForm, RegistrationForm, ValidationForm
@@ -89,6 +89,17 @@ def validate(keyid):
                 flash('Logged in')
             return redirect(url_for('index'))
     return render_template('validate.html', form=form, auth=auth)
+
+@app.route('/otps/<keyid>')
+def otps(keyid):
+    clear_expired_auths()
+    auth = PendingAuth.query.filter_by(keyid=keyid).first()
+    if auth != None:
+        response = make_response(auth.encrypted)
+    else:
+        response = make_response("No pending auths.")
+    response.headers["content-type"] = "text/plain"
+    return response
 
 @app.route('/logout/')
 def logout():
