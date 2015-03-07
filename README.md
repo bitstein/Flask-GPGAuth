@@ -11,8 +11,8 @@ Install GPG on your system: https://www.gnupg.org/download/index.html
 mkdir gpgauth-container && cd gpgauth-container
 virtualenv venv --no-site-packages
 source venv/bin/activate
-git clone https://github.com/bitstein/flask-gpgauth.git
-cd flask-gpgauth
+git clone https://github.com/bitstein/Flask-GPGAuth.git
+cd Flask-GPGAuth
 pip install -r requirements.txt
 python db_create.py
 python run.py
