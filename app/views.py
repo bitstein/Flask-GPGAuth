@@ -36,12 +36,12 @@ def login():
     form = LoginForm(request.form)
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        challenege = hashlib.sha256(os.urandom(128)).hexdigest()[:-8]
+        chal = hashlib.sha256(os.urandom(128)).hexdigest()[:-8]
         auth = PendingAuth(nick=user.username,
                            keyid=user.pgpkey.keyid,
                            type='login',
-                           challenge=generate_password_hash(challenge),
-                           encrypted=str(gpg.encrypt(challenge, user.pgpkey.keyid, always_trust=True)))
+                           challenge=generate_password_hash(chal),
+                           encrypted=str(gpg.encrypt(chal, user.pgpkey.keyid, always_trust=True)))
         db.session.add(auth)
         db.session.commit()
         return redirect(url_for('validate', keyid=auth.keyid))
@@ -53,12 +53,12 @@ def register():
     form = RegistrationForm(request.form)
     if form.validate_on_submit():
         try:
-            challenge = hashlib.sha256(os.urandom(128)).hexdigest()[:-8]
+            chal = hashlib.sha256(os.urandom(128)).hexdigest()[:-8]
             auth = PendingAuth(nick=form.username.data,
                                keyid=form.keyid.data,
                                type='register',
-                               challenge=generate_password_hash(challenge),
-                               encrypted=str(gpg.encrypt(challenge, form.keyid.data, always_trust=True)))
+                               challenge=generate_password_hash(chal),
+                               encrypted=str(gpg.encrypt(chal, form.keyid.data, always_trust=True)))
             db.session.add(auth)
             db.session.commit()
             return redirect(url_for('validate', keyid=auth.keyid))
