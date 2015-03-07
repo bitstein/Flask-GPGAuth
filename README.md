@@ -25,3 +25,5 @@ Based on: https://github.com/mrjoes/flask-admin/tree/master/examples/auth and Na
 This app helps the server verify its users, not the other way around.
 
 This app has not yet been thoroughly tested. Do not use it in production.
+
+GPG keys are currently only pulled from the MIT servers.
