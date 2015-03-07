@@ -1,0 +1,22 @@
+<!-- extend base layout -->
+{% extends "base.html" %}
+
+{% block content %}
+  <pre>{{encrypted}}</pre>
+  {% if encrypted == 'No pending auth.' %}
+  <a href="{{url_for('login')}}">Login</a><br>
+  <a href="{{url_for('register')}}">Register</a>
+  {% else %}
+  <form action="" method="post" name="">
+      {{ form.hidden_tag() }}
+      <p>
+          Challenge:<br>
+          {{ form.challenge(size=80) }}<br>
+          {% for error in form.challenge.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}<br>
+      </p>
+      <p><input type="submit"></p>
+  </form>
+  {% endif %}
+{% endblock %}
