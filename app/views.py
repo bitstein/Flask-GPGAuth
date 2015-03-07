@@ -5,7 +5,6 @@ from forms import LoginForm, RegistrationForm, ValidationForm
 from models import User, PGPKey, PendingAuth, now
 import hashlib
 import os
-from gnupg import GPG
 from config import GNUPGBINARY, GNUPGHOME
 import datetime
 from werkzeug.security import generate_password_hash
@@ -37,13 +36,14 @@ def login():
     form = LoginForm(request.form)
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
+        challenege = hashlib.sha256(os.urandom(128)).hexdigest()[:-8]
         auth = PendingAuth(nick=user.username,
                            keyid=user.pgpkey.keyid,
                            type='login',
-                           challenge=hashlib.sha256(os.urandom(128)).hexdigest()[:-8])
+                           challenge=generate_password_hash(challenge),
+                           encrypted=str(gpg.encrypt(challenge, user.pgpkey.keyid, always_trust=True)))
         db.session.add(auth)
         db.session.commit()
-        clear_expired_auths()
         return redirect(url_for('validate', keyid=auth.keyid))
     return render_template('login.html', form=form)
 
@@ -53,10 +53,12 @@ def register():
     form = RegistrationForm(request.form)
     if form.validate_on_submit():
         try:
+            challenge = hashlib.sha256(os.urandom(128)).hexdigest()[:-8]
             auth = PendingAuth(nick=form.username.data,
                                keyid=form.keyid.data,
                                type='register',
-                               challenge=hashlib.sha256(os.urandom(128)).hexdigest()[:-8])
+                               challenge=generate_password_hash(challenge),
+                               encrypted=str(gpg.encrypt(challenge, form.keyid.data, always_trust=True)))
             db.session.add(auth)
             db.session.commit()
             return redirect(url_for('validate', keyid=auth.keyid))
@@ -79,18 +81,14 @@ def validate(keyid):
                 db.session.add(user)
                 user.pgpkey = pgpkey
                 db.session.commit()
-                flash('Registered and logged in.')
                 login_user(user)
-                return redirect(url_for('index'))
+                flash('Registered and logged in.')
             if auth.type == 'login':
                 user = PGPKey.query.filter_by(keyid=keyid).first().user
                 login_user(user)
                 flash('Logged in')
-                return redirect(url_for('index'))
-        encrypted = gpg.encrypt(auth.challenge, keyid, always_trust=True)
-    else:
-        encrypted = 'No pending auth.'
-    return render_template('validate.html', form=form, auth=auth, encrypted=encrypted)
+            return redirect(url_for('index'))
+    return render_template('validate.html', form=form, auth=auth)
 
 @app.route('/logout/')
 def logout():

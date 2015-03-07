@@ -2,11 +2,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <pre>{{encrypted}}</pre>
-  {% if encrypted == 'No pending auth.' %}
-  <a href="{{url_for('login')}}">Login</a><br>
-  <a href="{{url_for('register')}}">Register</a>
-  {% else %}
+  {% if auth.encrypted %}
+  <pre>{{auth.encrypted}}</pre>
   <form action="" method="post" name="">
       {{ form.hidden_tag() }}
       <p>
@@ -18,5 +15,9 @@
       </p>
       <p><input type="submit"></p>
   </form>
+  {% else %}
+  <pre>No pending auths.</pre>
   {% endif %}
+  <a href="{{url_for('login')}}">Login</a><br>
+  <a href="{{url_for('register')}}">Register</a>
 {% endblock %}

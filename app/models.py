@@ -1,11 +1,17 @@
-from app import db
-from sqlalchemy.orm import validates
-from gnupg import GPG
+from app import db, gpg
 from config import GNUPGBINARY, GNUPGHOME
+from sqlalchemy.orm import validates
 import datetime
 
 def now():
     return datetime.datetime.now()
+
+def find_key_by_keyid(keyid):
+    for key in gpg.list_keys():
+        if key['keyid'] == keyid:
+            return key
+    raise LookupError("GnuPG public key for keyid %s not found!" % keyid)
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -38,9 +44,7 @@ class PGPKey(db.Model):
 
     @validates('keyid')
     def validate_keyid(self, key, field):
-        gpg = GPG(gpgbinary=GNUPGBINARY, gnupghome=GNUPGHOME)
-        key = gpg.recv_keys('pgp.mit.edu', field)
-        assert key.results
+        assert find_key_by_keyid(field)
         return field
 
     def __init__(self, **kwargs):
@@ -56,6 +60,7 @@ class PendingAuth(db.Model):
     keyid = db.Column(db.String(50))
     type = db.Column(db.String(50))
     challenge = db.Column(db.String(80))
+    encrypted = db.Column(db.String())
 
     def __repr__(self):
         return '<PendingAuth %r>' % (self.keyid)

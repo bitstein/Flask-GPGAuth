@@ -2,6 +2,7 @@ from flask.ext.wtf import Form
 from wtforms import TextField, PasswordField, HiddenField, validators
 from models import User, PGPKey, PendingAuth
 from werkzeug.security import check_password_hash
+from app import gpg
 
 class LoginForm(Form):
     username = TextField(validators=[validators.required()])
@@ -25,15 +26,17 @@ class RegistrationForm(Form):
     def validate_keyid(self, field):
         if PGPKey.query.filter_by(keyid=self.keyid.data).count() > 0:
             raise validators.ValidationError('Duplicate PGP key')
+        if gpg.recv_keys('pgp.mit.edu', self.keyid.data).results == []:
+            raise validators.ValidationError('Cannot find this PGP key.')
 
 class ValidationForm(Form):
     keyid = HiddenField(validators=[validators.required()])
     challenge = TextField(validators=[validators.required()])
 
     def validate_challenge(self, field):
-        chal = self.get_challenge()
-        if chal != self.challenge.data:
+        auth = self.get_auth()
+        if not check_password_hash(auth.challenge, self.challenge.data):
             raise validators.ValidationError('Invalid challenge response')
 
-    def get_challenge(self):
-        return PendingAuth.query.filter_by(keyid=self.keyid.data).first().challenge
+    def get_auth(self):
+        return PendingAuth.query.filter_by(keyid=self.keyid.data).first()
