@@ -1,10 +1,14 @@
-from app import db, gpg
-from config import GNUPGBINARY, GNUPGHOME
-from sqlalchemy.orm import validates
 import datetime
+
+from sqlalchemy.orm import validates
+
+from app import db, gpg
+# from config import GNUPGBINARY, GNUPGHOME
+
 
 def now():
     return datetime.datetime.now()
+
 
 def find_key_by_keyid(keyid):
     for key in gpg.list_keys():
@@ -36,6 +40,7 @@ class User(db.Model):
     def __repr__(self):
         return '<User %r>' % (self.username)
 
+
 class PGPKey(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     keyid = db.Column(db.String(50), unique=True)
@@ -52,6 +57,7 @@ class PGPKey(db.Model):
 
     def __repr__(self):
         return '<PGPKey %r>' % (self.keyid)
+
 
 class PendingAuth(db.Model):
     id = db.Column(db.Integer, primary_key=True)
