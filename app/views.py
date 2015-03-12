@@ -11,7 +11,6 @@ from flask.ext.login import current_user, login_required
 from app import app, db, lm, gpg
 from forms import LoginForm, RegistrationForm, ValidationForm
 from models import User, PGPKey, PendingAuth, now
-# from config import GNUPGBINARY, GNUPGHOME
 
 
 def clear_expired_auths():
@@ -68,20 +67,17 @@ def register():
     form = RegistrationForm(request.form)
     if not form.validate_on_submit():
         return render_template('register.html', form=form)
-    try:
-        chal = hashlib.sha256(os.urandom(128)).hexdigest()[:-8]
-        auth = PendingAuth(nick=form.username.data,
-                           keyid=form.keyid.data,
-                           type='register',
-                           challenge=generate_password_hash(chal),
-                           encrypted=str(gpg.encrypt(chal,
-                                         form.keyid.data,
-                                         always_trust=True)))
-        db.session.add(auth)
-        db.session.commit()
-        return redirect(url_for('validate', keyid=auth.keyid))
-    except:
-        flash('Something is wrong with the fingerprint.')
+    chal = hashlib.sha256(os.urandom(128)).hexdigest()[:-8]
+    auth = PendingAuth(nick=form.username.data,
+                       keyid=form.keyid.data,
+                       type='register',
+                       challenge=generate_password_hash(chal),
+                       encrypted=str(gpg.encrypt(chal,
+                                     form.keyid.data,
+                                     always_trust=True)))
+    db.session.add(auth)
+    db.session.commit()
+    return redirect(url_for('validate', keyid=auth.keyid))
 
 
 @app.route('/validate/<keyid>', methods=('GET', 'POST'))
@@ -89,11 +85,8 @@ def validate(keyid):
     clear_expired_auths()
     auth = PendingAuth.query.filter_by(keyid=keyid).first()
     form = ValidationForm(request.form, keyid=keyid)
-    if auth is None:
+    if auth is None or not form.validate_on_submit():
         return render_template('validate.html', form=form, auth=auth)
-
-    if not form.validate_on_submit():
-        return redirect(url_for('index'))
 
     if auth.type == 'register':
         pgpkey = PGPKey(keyid=auth.keyid)
@@ -108,6 +101,7 @@ def validate(keyid):
         user = PGPKey.query.filter_by(keyid=keyid).first().user
         login_user(user)
         flash('Logged in')
+    return redirect(url_for('index'))
 
 
 @app.route('/otps/<keyid>')
