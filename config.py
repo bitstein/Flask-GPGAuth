@@ -8,3 +8,5 @@ WTF_CSRF_ENABLED = True
 SECRET_KEY = 'dont-use-this-secret'
 
 GNUPGHOME = os.path.join(basedir, '.gnupg')
+
+KEYSERVERS = ['subset.pool.sks-keyservers.net', 'pgp.mit.edu']
