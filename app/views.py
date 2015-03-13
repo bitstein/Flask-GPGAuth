@@ -64,6 +64,8 @@ def login():
 @app.route('/register/', methods=('GET', 'POST'))
 def register():
     clear_expired_auths()
+    if g.user is not None and g.user.is_authenticated():
+        return redirect(url_for('index'))
     form = RegistrationForm(request.form)
     if not form.validate_on_submit():
         return render_template('register.html', form=form)
@@ -101,6 +103,8 @@ def validate(keyid):
         user = PGPKey.query.filter_by(keyid=keyid).first().user
         login_user(user)
         flash('Logged in')
+    db.session.delete(auth)
+    db.session.commit()
     return redirect(url_for('index'))
 
 
