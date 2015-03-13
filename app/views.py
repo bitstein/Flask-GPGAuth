@@ -13,12 +13,20 @@ from forms import LoginForm, RegistrationForm, ValidationForm
 from models import User, PGPKey, PendingAuth, now
 
 
+def get_key_by_keyid(keyid):
+    for key in gpg.list_keys():
+        if key['keyid'] == keyid:
+            return key
+    return None
+
+
 def clear_expired_auths():
     for auth in PendingAuth.query.filter(
         PendingAuth.expiry < now() - datetime.timedelta(minutes=10)
     ).all():
         if auth.type == 'register':
-            gpg.delete_keys(auth.keyid)
+            gpgkey = get_key_by_keyid(auth.keyid)
+            gpg.delete_keys(gpgkey['fingerprint'])
         db.session.delete(auth)
         db.session.commit()
     # make this return something
