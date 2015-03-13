@@ -1,8 +1,9 @@
 from flask.ext.wtf import Form
-from wtforms import TextField, PasswordField, HiddenField, validators
+from wtforms import TextField, HiddenField, validators
 from models import User, PGPKey, PendingAuth
 from werkzeug.security import check_password_hash
 from app import gpg
+
 
 class LoginForm(Form):
     username = TextField(validators=[validators.required()])
@@ -14,6 +15,7 @@ class LoginForm(Form):
 
     def get_user(self):
         return User.query.filter_by(username=self.username.data).first()
+
 
 class RegistrationForm(Form):
     username = TextField(validators=[validators.required()])
@@ -28,6 +30,7 @@ class RegistrationForm(Form):
             raise validators.ValidationError('Duplicate PGP key')
         if gpg.recv_keys('pgp.mit.edu', self.keyid.data).results == []:
             raise validators.ValidationError('Cannot find this PGP key.')
+
 
 class ValidationForm(Form):
     keyid = HiddenField(validators=[validators.required()])
