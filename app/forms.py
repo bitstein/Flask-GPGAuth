@@ -3,6 +3,7 @@ from wtforms import TextField, HiddenField, validators
 from models import User, PGPKey, PendingAuth
 from werkzeug.security import check_password_hash
 from app import gpg
+from config import KEYSERVERS
 
 
 class LoginForm(Form):
@@ -28,8 +29,18 @@ class RegistrationForm(Form):
     def validate_keyid(self, field):
         if PGPKey.query.filter_by(keyid=self.keyid.data).count() > 0:
             raise validators.ValidationError('Duplicate PGP key')
-        if gpg.recv_keys('pgp.mit.edu', self.keyid.data).results == []:
+        if not self.recv_key(self.keyid.data):
             raise validators.ValidationError('Cannot find this PGP key.')
+
+    def recv_key(self, keyid):
+        for ks in KEYSERVERS:
+            try:
+                result = gpg.recv_keys(ks, keyid)
+                if 'ok' in result.results[0]:
+                    return True
+            except:
+                continue
+        return False
 
 
 class ValidationForm(Form):
